@@ -3,7 +3,7 @@
   "short_name": "Chai & Cigarettes",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f8f3ec",
-  "theme_color": "#6b2038",
-  "description": "A simple private chai and cigarette counter."
+  "background_color": "#f1f4f5",
+  "theme_color": "#17232d",
+  "description": "A simple personal chai and cigarette count tracker."
 }

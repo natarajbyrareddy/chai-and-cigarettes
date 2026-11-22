@@ -33,10 +33,13 @@ $('undoBtn').addEventListener('click',()=>{
  const r=data.records[data.records.length-1];
  const item=r.kind==='cigarette'?(r.brandName||'Cigarette'):(r.teaSize==='half'?'Half chai':'Full chai');
  const owner=r.owner==='my'?'My count':'Group count';
- const when=new Date(r.datetime).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
- const message=`Undo this entry?\\n\\n${owner}: ${item}\\nAmount: ${rupee(r.cost)}\\nTime: ${when}\\n\\nThis will remove the latest record.`;
- if(!window.confirm(message))return;
- data.records.pop();lastAdded=null;save();$('feedback').textContent='Last entry removed.';
+ $('undoDetail').textContent=`${owner} · ${item} · ${rupee(r.cost)}`;
+ $('undoDialog').showModal();
+});
+$('cancelUndo').addEventListener('click',()=>$('undoDialog').close());
+$('confirmUndo').addEventListener('click',()=>{
+ if(!data.records.length){$('undoDialog').close();return;}
+ data.records.pop();lastAdded=null;$('undoDialog').close();save();$('feedback').textContent='Last entry undone.';
 });
 $('settingsOpen').addEventListener('click',openSettings);
 function openSettings(){ $('halfPrice').value=data.settings.halfTea;$('fullPrice').value=data.settings.fullTea;renderBrands();$('settingsDialog').showModal()}

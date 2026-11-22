@@ -1,15 +1,17 @@
-CHAI & CIGARETTES V2
+CHAI & CIGARETTES — VERSION 3 DESIGN REFRESH
 
-Upload/replace index.html, styles.css, app.js, manifest.json and sw.js in the repository root.
+Replace these five files in the repository root:
+index.html, styles.css, app.js, manifest.json, sw.js
 
-V2 changes:
-- One tap instantly records one item. No entry forms.
-- Separate My Count and Group Count.
-- My/group cigarette, half chai and full chai quick buttons.
-- Undo last entry.
-- Price settings and selectable cigarette brand for quick-add.
-- Historical entries retain the price saved at the time.
-- History, monthly/yearly totals, JSON backup/restore.
-- Uses the same localStorage key as V1 to preserve existing V1 data on this device.
+What changed:
+- Complete visual redesign: graphite, white and teal palette.
+- More compact dashboard and cleaner count cards.
+- Clearer hierarchy and tap targets.
+- Custom, concise Undo confirmation: owner, item and amount only.
+- V3 service-worker cache name to refresh the app assets.
 
-Important: This is local device storage, not cloud sync. Export backups regularly. After deployment, fully close/reopen the installed app or reload the site to fetch the new version. If stale, clear website data only after exporting a backup.
+Data:
+- app.js intentionally retains localStorage key chaiCigarettesData_v1.
+- Existing local records on the same iPhone/browser should remain.
+- Do not clear Safari website data. Export a JSON backup before making major browser changes.
+- GitHub Pages hosting does not sync records between devices.
