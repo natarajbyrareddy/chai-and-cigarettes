@@ -1,0 +1,10 @@
+{
+  "name": "Chai & Cigarettes",
+  "short_name": "Chai & Cigarettes",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8f3ec",
+  "theme_color": "#6b2038",
+  "description": "A private chai and cigarette count and expense tracker.",
+  "icons": []
+}
