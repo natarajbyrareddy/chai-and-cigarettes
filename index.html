@@ -1,115 +1,56 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#6b2038">
-  <meta name="description" content="A private, simple chai and cigarette count and expense tracker.">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css">
-  <title>Chai & Cigarettes</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#6b2038"><link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css">
+<title>Chai & Cigarettes</title>
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <p class="eyebrow">PERSONAL TRACKER</p>
-      <h1>Chai <span>&</span> Cigarettes</h1>
+<header class="top">
+  <div><p class="eyebrow">YOUR DAILY TRACKER</p><h1>Chai <i>&</i> Cigarettes</h1></div>
+  <button class="gear" id="settingsOpen" aria-label="Settings">⚙</button>
+</header>
+<main>
+  <section class="summary">
+    <p class="eyebrow pale">SPENT TODAY</p><div class="total" id="todaySpend">₹0</div>
+    <div class="summary-bottom"><div><small>MY SPEND</small><b id="mySpend">₹0</b></div><div><small>GROUP SPEND</small><b id="groupSpend">₹0</b></div><div><small>THIS MONTH</small><b id="monthSpend">₹0</b></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><div><p class="eyebrow">PERSONAL</p><h2>My count</h2></div><span class="count-pill" id="myTodayCount">0 today</span></div>
+    <div class="button-grid">
+      <button class="tap-button" data-add="cigarette" data-owner="my"><span class="emoji">🚬</span><strong>+ Cigarette</strong><small id="myCigPrice">₹18 each</small></button>
+      <button class="tap-button" data-add="half" data-owner="my"><span class="emoji">☕</span><strong>+ Half chai</strong><small id="halfPriceLabel">₹5</small></button>
+      <button class="tap-button" data-add="full" data-owner="my"><span class="emoji">☕</span><strong>+ Full chai</strong><small id="fullPriceLabel">₹10</small></button>
     </div>
-    <div class="date-pill" id="todayLabel"></div>
-  </header>
+    <div class="counts"><span>🚬 <b id="myCigs">0</b> cigarettes</span><span>☕ <b id="myTea">0</b> chai equivalents</span></div>
+  </section>
 
-  <main>
-    <section class="hero-card">
-      <div class="hero-heading">
-        <div><p class="eyebrow light">TOTAL SPENT TODAY</p><div class="hero-total" id="todayTotal">₹0.00</div></div>
-        <div class="hero-month"><span>This month</span><strong id="monthTotal">₹0.00</strong></div>
-      </div>
-      <div class="split-line"></div>
-      <div class="hero-split">
-        <div><span>My spending</span><strong id="mySpend">₹0.00</strong></div>
-        <div><span>Group spending</span><strong id="groupSpend">₹0.00</strong></div>
-      </div>
-    </section>
+  <section class="panel group-panel">
+    <div class="section-head"><div><p class="eyebrow">FRIENDS & SHARED PURCHASES</p><h2>Group count</h2></div><span class="count-pill" id="groupTodayCount">0 today</span></div>
+    <div class="button-grid">
+      <button class="tap-button" data-add="cigarette" data-owner="group"><span class="emoji">👥🚬</span><strong>+ Cigarette</strong><small id="groupCigPrice">₹18 each</small></button>
+      <button class="tap-button" data-add="half" data-owner="group"><span class="emoji">👥☕</span><strong>+ Half chai</strong><small id="groupHalfPrice">₹5</small></button>
+      <button class="tap-button" data-add="full" data-owner="group"><span class="emoji">👥☕</span><strong>+ Full chai</strong><small id="groupFullPrice">₹10</small></button>
+    </div>
+    <div class="counts"><span>🚬 <b id="groupCigs">0</b> cigarettes</span><span>☕ <b id="groupTea">0</b> chai equivalents</span></div>
+  </section>
 
-    <section class="section-block">
-      <div class="section-title"><div><p class="eyebrow">TODAY'S ACTIVITY</p><h2>My count & group count</h2></div></div>
-      <div class="count-grid">
-        <article class="count-card">
-          <div class="count-card-head"><span class="icon">🚬</span><span class="tag">MY COUNT</span></div>
-          <strong class="big-count" id="myCigs">0</strong><span class="muted">cigarettes</span>
-        </article>
-        <article class="count-card">
-          <div class="count-card-head"><span class="icon">🚬</span><span class="tag">GROUP COUNT</span></div>
-          <strong class="big-count" id="groupCigs">0</strong><span class="muted">cigarettes</span>
-        </article>
-        <article class="count-card">
-          <div class="count-card-head"><span class="icon">☕</span><span class="tag">MY COUNT</span></div>
-          <strong class="big-count" id="myTea">0</strong><span class="muted">chai equivalents</span>
-        </article>
-        <article class="count-card">
-          <div class="count-card-head"><span class="icon">☕</span><span class="tag">GROUP COUNT</span></div>
-          <strong class="big-count" id="groupTea">0</strong><span class="muted">chai equivalents</span>
-        </article>
-      </div>
-    </section>
+  <div class="action-row"><button id="undoBtn" class="secondary" disabled>↶ Undo last entry</button><button id="historyBtn" class="secondary">History & reports</button></div>
+  <p class="hint" id="feedback">Tap a button once to record one item. No forms needed.</p>
+</main>
 
-    <section class="section-block">
-      <div class="section-title"><div><p class="eyebrow">QUICK ENTRY</p><h2>What are you recording?</h2></div></div>
-      <div class="quick-grid">
-        <button class="quick-btn" data-kind="cigarette" data-owner="my"><span>🚬</span><b>My cigarette</b><small>Record one</small></button>
-        <button class="quick-btn" data-kind="cigarette" data-owner="group"><span>👥🚬</span><b>Group cigarette</b><small>Record for friends</small></button>
-        <button class="quick-btn" data-kind="tea" data-owner="my"><span>☕</span><b>My chai</b><small>Half or full</small></button>
-        <button class="quick-btn" data-kind="tea" data-owner="group"><span>👥☕</span><b>Group chai</b><small>Half or full</small></button>
-      </div>
-      <button class="combo-btn" id="comboBtn">＋ My chai + cigarette <span>Record both together</span></button>
-    </section>
+<dialog id="settingsDialog">
+  <div class="modal-head"><div><p class="eyebrow">CUSTOMISE</p><h2>Prices & backup</h2></div><button class="x" data-close="settingsDialog">×</button></div>
+  <div class="setting-group"><h3>Tea prices</h3><div class="two"><label>Half chai (₹)<input id="halfPrice" type="number" min="0" step=".5"></label><label>Full chai (₹)<input id="fullPrice" type="number" min="0" step=".5"></label></div></div>
+  <div class="setting-group"><h3>Cigarette brands</h3><div id="brands"></div><div class="add-brand"><input id="brandName" placeholder="Brand / type"><input id="brandPrice" type="number" min="0" step=".5" placeholder="₹ each"><button id="addBrand">Add</button></div><label class="active-label">Use for quick-add buttons<select id="activeBrand"></select></label><p class="note">Changing a price affects future entries only. Past entries keep their original price.</p></div>
+  <div class="setting-group"><h3>Data safety</h3><div class="backup-row"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary restore">Restore backup<input id="importFile" type="file" accept="application/json"></label></div><p class="note">Data is stored on this iPhone/browser. Export a backup regularly. GitHub Pages does not sync data between devices.</p></div>
+  <button class="save" id="saveSettings">Save settings</button>
+</dialog>
 
-    <section class="section-block">
-      <div class="section-title"><div><p class="eyebrow">RECENT RECORDS</p><h2>Latest activity</h2></div><button class="text-btn" id="viewAll">View all</button></div>
-      <div id="recentList" class="record-list"><div class="empty">No records yet. Add your first entry above.</div></div>
-    </section>
-
-    <section class="section-block tools-block">
-      <div class="section-title"><div><p class="eyebrow">YOUR DATA</p><h2>Backup & settings</h2></div></div>
-      <div class="tool-row">
-        <button class="tool-btn" id="settingsBtn">⚙️ Prices & settings</button>
-        <button class="tool-btn" id="exportBtn">⬇️ Export backup</button>
-        <label class="tool-btn file-btn">⬆️ Restore backup<input type="file" id="importFile" accept="application/json"></label>
-      </div>
-      <p class="privacy-note">Your entries are stored on this device. Export a backup regularly, especially before clearing browser data or changing phones.</p>
-    </section>
-  </main>
-
-  <nav class="bottom-nav"><a class="active" href="#top">⌂<span>Home</span></a><button id="historyNav">▤<span>History</span></button><button id="reportsNav">◷<span>Reports</span></button><button id="settingsNav">⚙<span>Settings</span></button></nav>
-
-  <dialog id="entryDialog">
-    <form method="dialog" id="entryForm">
-      <div class="dialog-head"><div><p class="eyebrow" id="entryEyebrow">NEW ENTRY</p><h2 id="entryTitle">Record activity</h2></div><button class="close-btn" value="cancel" aria-label="Close">×</button></div>
-      <input type="hidden" id="entryKind"><input type="hidden" id="entryOwner">
-      <div id="teaOptions" class="field hidden"><label>Chai size</label><div class="choice-row"><button type="button" class="choice selected" data-tea="half">Half chai <small>0.5</small></button><button type="button" class="choice" data-tea="full">Full chai <small>1.0</small></button></div></div>
-      <div id="cigOptions" class="field hidden"><label for="brandSelect">Cigarette</label><select id="brandSelect"></select><div class="subtle" id="cigPriceHint"></div></div>
-      <div class="field"><label for="entryQty">Quantity</label><input id="entryQty" type="number" min="1" step="1" value="1" inputmode="numeric" required></div>
-      <div class="field"><label for="entryDate">Date & time</label><input id="entryDate" type="datetime-local" required></div>
-      <div class="field"><label for="entryNote">Note (optional)</label><input id="entryNote" maxlength="100" placeholder="e.g. with friends"></div>
-      <div class="estimate" id="entryEstimate">Estimated expense: ₹0.00</div>
-      <button class="primary-btn" id="saveEntry" value="default">Save entry</button>
-    </form>
-  </dialog>
-
-  <dialog id="settingsDialog">
-    <form method="dialog" id="settingsForm">
-      <div class="dialog-head"><div><p class="eyebrow">SETUP</p><h2>Prices & settings</h2></div><button class="close-btn" value="cancel">×</button></div>
-      <div class="settings-section"><h3>Tea prices</h3><div class="two-fields"><div class="field"><label>Half chai (₹)</label><input id="halfPrice" type="number" min="0" step="0.01"></div><div class="field"><label>Full chai (₹)</label><input id="fullPrice" type="number" min="0" step="0.01"></div></div></div>
-      <div class="settings-section"><h3>Cigarette brands & prices</h3><div id="brandList"></div><div class="add-brand"><input id="newBrandName" placeholder="Brand / type"><input id="newBrandPrice" type="number" min="0" step="0.01" placeholder="₹ each"><button type="button" id="addBrand">Add</button></div><p class="subtle">Changing a price affects new entries only. Old records keep their saved price.</p></div>
-      <div class="settings-section"><h3>Packet purchase (optional stock note)</h3><p class="subtle">You can note packet purchases here. Under your consumption-based method, packet purchases do not add to expenses; the unit cost is counted when a cigarette is recorded as consumed or bought for the group.</p><div class="two-fields"><div class="field"><label>Packet size</label><input id="packetSize" type="number" min="1" step="1"></div><div class="field"><label>Packet price (₹)</label><input id="packetPrice" type="number" min="0" step="0.01"></div></div><button type="button" class="secondary-btn" id="savePacket">Save packet details</button></div>
-      <button class="primary-btn" id="saveSettings" value="default">Save settings</button>
-    </form>
-  </dialog>
-
-  <dialog id="listDialog">
-    <div class="dialog-head"><div><p class="eyebrow" id="listEyebrow">ACTIVITY</p><h2 id="listTitle">History</h2></div><button class="close-btn" id="closeList">×</button></div>
-    <div id="listContent" class="record-list"></div>
-  </dialog>
-  <script src="app.js"></script>
-</body>
-</html>
+<dialog id="historyDialog">
+  <div class="modal-head"><div><p class="eyebrow">YOUR RECORDS</p><h2>History & reports</h2></div><button class="x" data-close="historyDialog">×</button></div>
+  <div class="report-cards" id="reportCards"></div><div class="history-list" id="historyList"></div>
+</dialog>
+<script src="app.js"></script>
+</body></html>

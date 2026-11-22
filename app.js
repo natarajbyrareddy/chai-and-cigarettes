@@ -1,70 +1,47 @@
-const KEY = 'chaiCigarettesData_v1';
-const $ = id => document.getElementById(id);
-const money = n => '₹' + (Number(n)||0).toFixed(2);
-const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-const localDateTime = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
-const defaultData = () => ({version:1,settings:{halfTea:5,fullTea:10,brands:[{id:'default',name:'Default cigarette',price:18}],packetSize:10,packetPrice:180},records:[],packetNotes:[]});
-let data = loadData(), currentTea = 'half', entryContext = null;
-function loadData(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.version===1&&Array.isArray(v.records))return {...defaultData(),...v,settings:{...defaultData().settings,...v.settings}};}catch(e){}return defaultData();}
-function persist(){localStorage.setItem(KEY,JSON.stringify(data));render();}
-function dateOf(r){return r.datetime.slice(0,10)}
-function sum(list,fn){return list.reduce((a,x)=>a+fn(x),0)}
-function recordCost(r){return Number(r.cost)||0}
-function chaiUnits(r){return r.kind==='tea'?(r.teaSize==='half'?0.5:1)*r.qty:0}
+const KEY='chaiCigarettesData_v1', $=id=>document.getElementById(id);
+const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const now=()=>{let d=new Date();return `${today()}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+const rupee=n=>'₹'+(Number(n)||0).toFixed(2).replace(/\.00$/,'');
+const fresh=()=>({version:2,settings:{halfTea:5,fullTea:10,brands:[{id:'default',name:'Default cigarette',price:18}],activeBrand:'default'},records:[]});
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.records)){let d=fresh();return {...d,...x,version:2,settings:{...d.settings,...x.settings}}}}catch(e){}return fresh()}
+let data=load(),lastAdded=null;
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function dayRecords(day=today()){return data.records.filter(r=>r.datetime.slice(0,10)===day)}
+function total(rows){return rows.reduce((s,r)=>s+Number(r.cost||0),0)}
+function count(rows,kind){return rows.filter(r=>r.kind===kind).reduce((s,r)=>s+Number(r.qty||1),0)}
+function teaCount(rows){return rows.filter(r=>r.kind==='tea').reduce((s,r)=>s+(r.teaSize==='half'?.5:1)*Number(r.qty||1),0)}
+function activeBrand(){return data.settings.brands.find(b=>b.id===data.settings.activeBrand)||data.settings.brands[0]}
 function render(){
- const t=todayISO(), month=t.slice(0,7), todays=data.records.filter(r=>dateOf(r)===t), monthly=data.records.filter(r=>dateOf(r).startsWith(month));
- const my=todays.filter(r=>r.owner==='my'), group=todays.filter(r=>r.owner==='group');
- $('todayLabel').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
- $('todayTotal').textContent=money(sum(todays,recordCost));$('monthTotal').textContent=money(sum(monthly,recordCost));
- $('mySpend').textContent=money(sum(my,recordCost));$('groupSpend').textContent=money(sum(group,recordCost));
- $('myCigs').textContent=sum(my.filter(r=>r.kind==='cigarette'),r=>r.qty);
- $('groupCigs').textContent=sum(group.filter(r=>r.kind==='cigarette'),r=>r.qty);
- $('myTea').textContent=sum(my.filter(r=>r.kind==='tea'),chaiUnits).toFixed(1).replace(/\.0$/,'');
- $('groupTea').textContent=sum(group.filter(r=>r.kind==='tea'),chaiUnits).toFixed(1).replace(/\.0$/,'');
- const recent=[...data.records].sort((a,b)=>b.datetime.localeCompare(a.datetime)).slice(0,5);
- $('recentList').innerHTML=recent.length?recent.map(recordHTML).join(''):'<div class="empty">No records yet. Add your first entry above.</div>';
+ let rows=dayRecords(),my=rows.filter(r=>r.owner==='my'),group=rows.filter(r=>r.owner==='group'),month= data.records.filter(r=>r.datetime.startsWith(today().slice(0,7)));
+ $('todaySpend').textContent=rupee(total(rows));$('mySpend').textContent=rupee(total(my));$('groupSpend').textContent=rupee(total(group));$('monthSpend').textContent=rupee(total(month));
+ $('myCigs').textContent=count(my,'cigarette');$('groupCigs').textContent=count(group,'cigarette');$('myTea').textContent=teaCount(my).toFixed(1).replace(/\.0$/,'');$('groupTea').textContent=teaCount(group).toFixed(1).replace(/\.0$/,'');
+ $('myTodayCount').textContent=(my.length)+' entries today';$('groupTodayCount').textContent=(group.length)+' entries today';
+ let b=activeBrand();$('myCigPrice').textContent=rupee(b?.price)+' each';$('groupCigPrice').textContent=rupee(b?.price)+' each';
+ $('halfPriceLabel').textContent=rupee(data.settings.halfTea);$('groupHalfPrice').textContent=rupee(data.settings.halfTea);$('fullPriceLabel').textContent=rupee(data.settings.fullTea);$('groupFullPrice').textContent=rupee(data.settings.fullTea);
+ $('undoBtn').disabled=!data.records.length;
 }
-function recordHTML(r){const when=new Date(r.datetime).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});let title=r.kind==='tea'?`${r.teaSize==='half'?'Half chai':'Full chai'} × ${r.qty}`:`${r.brandName||'Cigarette'} × ${r.qty}`;return `<div class="record"><div class="record-main"><span class="record-title">${r.owner==='my'?'My':'Group'} · ${title}</span><span class="record-meta">${when}${r.note?' · '+escapeHTML(r.note):''}</span></div><span class="record-cost">${money(r.cost)}</span></div>`}
-function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function openEntry(kind,owner){
- entryContext={kind,owner};$('entryKind').value=kind;$('entryOwner').value=owner;$('entryQty').value=1;$('entryDate').value=localDateTime();$('entryNote').value='';
- $('entryEyebrow').textContent=owner==='my'?'MY COUNT':'GROUP COUNT';$('entryTitle').textContent=kind==='tea'?'Record chai':'Record cigarette';
- $('teaOptions').classList.toggle('hidden',kind!=='tea');$('cigOptions').classList.toggle('hidden',kind!=='cigarette');
- if(kind==='tea'){currentTea='half';document.querySelectorAll('[data-tea]').forEach(b=>b.classList.toggle('selected',b.dataset.tea==='half'));}
- populateBrands();updateEstimate();$('entryDialog').showModal();
+function add(kind,owner){
+ let cost,teaSize=null,brand=null,label;
+ if(kind==='cigarette'){brand=activeBrand();cost=Number(brand?.price)||0;label=(owner==='my'?'My':'Group')+' cigarette added';}
+ else{teaSize=kind;cost=Number(kind==='half'?data.settings.halfTea:data.settings.fullTea)||0;label=(owner==='my'?'My':'Group')+' '+(kind==='half'?'half chai':'full chai')+' added';}
+ let r={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),kind:kind==='cigarette'?'cigarette':'tea',owner,qty:1,teaSize,brandId:brand?.id||null,brandName:brand?.name||null,unitPrice:cost,cost,datetime:now()};
+ data.records.push(r);lastAdded=r.id;save();$('feedback').textContent=label+' · '+rupee(cost);
 }
-function populateBrands(){const sel=$('brandSelect');sel.innerHTML=data.settings.brands.map(b=>`<option value="${escapeHTML(b.id)}">${escapeHTML(b.name)} — ${money(b.price)}</option>`).join('');}
-function unitCost(){if(entryContext?.kind==='tea')return currentTea==='half'?Number(data.settings.halfTea):Number(data.settings.fullTea);const b=data.settings.brands.find(x=>x.id===$('brandSelect').value)||data.settings.brands[0];return Number(b?.price)||0;}
-function updateEstimate(){if(!entryContext)return;const qty=Math.max(1,Number($('entryQty').value)||1);$('entryEstimate').textContent='Estimated expense: '+money(unitCost()*qty);$('cigPriceHint').textContent='Current price per cigarette: '+money(unitCost());}
-document.querySelectorAll('.quick-btn').forEach(b=>b.addEventListener('click',()=>openEntry(b.dataset.kind,b.dataset.owner)));
-document.querySelectorAll('[data-tea]').forEach(b=>b.addEventListener('click',()=>{currentTea=b.dataset.tea;document.querySelectorAll('[data-tea]').forEach(x=>x.classList.toggle('selected',x===b));updateEstimate()}));
-$('entryQty').addEventListener('input',updateEstimate);$('brandSelect').addEventListener('change',updateEstimate);
-$('comboBtn').addEventListener('click',()=>{ // Sequential pair entry, saved as two linked records
- openEntry('cigarette','my'); $('entryNote').value='Chai + cigarette'; entryContext.combo=true;
-});
-$('entryForm').addEventListener('submit',e=>{
- if(e.submitter?.value==='cancel')return;
- e.preventDefault();if(!entryContext)return;
- const kind=entryContext.kind,owner=entryContext.owner,qty=Math.max(1,Math.floor(Number($('entryQty').value)||1)),datetime=$('entryDate').value||localDateTime(),note=$('entryNote').value.trim();
- const brand=data.settings.brands.find(x=>x.id===$('brandSelect').value);
- const r={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),kind,owner,qty,datetime,note,cost:unitCost()*qty,unitPrice:unitCost(),teaSize:kind==='tea'?currentTea:null,brandId:kind==='cigarette'?brand?.id:null,brandName:kind==='cigarette'?brand?.name:null};
- data.records.push(r);
- const combo=entryContext.combo;entryContext=null;$('entryDialog').close();persist();
- if(combo){openEntry('tea','my');$('entryNote').value='Chai + cigarette';}
-});
-$('settingsBtn').addEventListener('click',openSettings);$('settingsNav').addEventListener('click',openSettings);
-function openSettings(){ $('halfPrice').value=data.settings.halfTea;$('fullPrice').value=data.settings.fullTea;$('packetSize').value=data.settings.packetSize;$('packetPrice').value=data.settings.packetPrice;renderBrands();$('settingsDialog').showModal();}
-function renderBrands(){$('brandList').innerHTML=data.settings.brands.map(b=>`<div class="brand-row" data-id="${escapeHTML(b.id)}"><input class="brand-name" value="${escapeHTML(b.name)}" aria-label="Brand name"><input class="brand-price" type="number" min="0" step=".01" value="${b.price}" aria-label="Price"><button type="button" class="delete-brand" title="Delete">×</button></div>`).join('');document.querySelectorAll('.delete-brand').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.closest('.brand-row').dataset.id;if(data.settings.brands.length>1){data.settings.brands=data.settings.brands.filter(b=>b.id!==id);renderBrands();}}));}
-$('addBrand').addEventListener('click',()=>{const name=$('newBrandName').value.trim(),price=Number($('newBrandPrice').value);if(!name||!Number.isFinite(price)||price<0)return alert('Enter a brand name and valid price.');data.settings.brands.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name,price});$('newBrandName').value='';$('newBrandPrice').value='';renderBrands();});
-$('savePacket').addEventListener('click',()=>{data.settings.packetSize=Math.max(1,Number($('packetSize').value)||10);data.settings.packetPrice=Math.max(0,Number($('packetPrice').value)||0);alert('Packet details saved. Packet purchase does not add to expenses.');});
-$('settingsForm').addEventListener('submit',e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();data.settings.halfTea=Math.max(0,Number($('halfPrice').value)||0);data.settings.fullTea=Math.max(0,Number($('fullPrice').value)||0);document.querySelectorAll('.brand-row').forEach(row=>{const b=data.settings.brands.find(x=>x.id===row.dataset.id);if(b){b.name=row.querySelector('.brand-name').value.trim()||b.name;b.price=Math.max(0,Number(row.querySelector('.brand-price').value)||0)}});$('settingsDialog').close();persist();});
-$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});download(blob,`chai-cigarettes-backup-${todayISO()}.json`)});
-function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const v=JSON.parse(await f.text());if(v.version!==1||!Array.isArray(v.records)||!v.settings)throw Error();if(!confirm('Restore this backup? Current app data will be replaced. Export a backup first if you need it.'))return;data=v;persist();alert('Backup restored successfully.');}catch(err){alert('This backup file is not valid for Chai & Cigarettes.')}e.target.value='';});
-function openList(title,records,eyebrow='RECORDS'){$('listTitle').textContent=title;$('listEyebrow').textContent=eyebrow;const sorted=[...records].sort((a,b)=>b.datetime.localeCompare(a.datetime));$('listContent').innerHTML=sorted.length?sorted.map(recordHTML).join(''):'<div class="empty">No records found.</div>';$('listDialog').showModal();}
-$('viewAll').addEventListener('click',()=>openList('All history',data.records,'HISTORY'));
-$('historyNav').addEventListener('click',()=>openList('All history',data.records,'HISTORY'));
-$('reportsNav').addEventListener('click',()=>{const now=todayISO(),m=now.slice(0,7),y=now.slice(0,4),month=data.records.filter(r=>dateOf(r).startsWith(m)),year=data.records.filter(r=>dateOf(r).startsWith(y));const report=[{label:'THIS MONTH',records:month},{label:'THIS YEAR',records:year}];$('listTitle').textContent='Spending reports';$('listEyebrow').textContent='SUMMARY';$('listContent').innerHTML=report.map(x=>`<div class="record"><div class="record-main"><span class="record-title">${x.label}</span><span class="record-meta">${x.records.length} entries · My ${money(sum(x.records.filter(r=>r.owner==='my'),recordCost))} · Group ${money(sum(x.records.filter(r=>r.owner==='group'),recordCost))}</span></div><span class="record-cost">${money(sum(x.records,recordCost))}</span></div>`).join('');$('listDialog').showModal();});
-$('closeList').addEventListener('click',()=>$('listDialog').close());
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click',()=>add(btn.dataset.add,btn.dataset.owner)));
+$('undoBtn').addEventListener('click',()=>{if(!data.records.length)return;let r=data.records.pop();lastAdded=null;save();$('feedback').textContent='Last entry undone.'});
+$('settingsOpen').addEventListener('click',openSettings);
+function openSettings(){ $('halfPrice').value=data.settings.halfTea;$('fullPrice').value=data.settings.fullTea;renderBrands();$('settingsDialog').showModal()}
+function renderBrands(){
+ $('brands').innerHTML=data.settings.brands.map(b=>`<div class="brand-row" data-id="${esc(b.id)}"><input class="bn" value="${esc(b.name)}"><input class="bp" type="number" min="0" step=".5" value="${b.price}"><button class="del" type="button">×</button></div>`).join('');
+ $('activeBrand').innerHTML=data.settings.brands.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} (${rupee(b.price)})</option>`).join('');$('activeBrand').value=data.settings.activeBrand;
+ document.querySelectorAll('.del').forEach(btn=>btn.onclick=()=>{if(data.settings.brands.length<2)return alert('Keep at least one cigarette brand.');let id=btn.closest('.brand-row').dataset.id;data.settings.brands=data.settings.brands.filter(b=>b.id!==id);if(data.settings.activeBrand===id)data.settings.activeBrand=data.settings.brands[0].id;renderBrands()});
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('addBrand').onclick=()=>{let name=$('brandName').value.trim(),price=Number($('brandPrice').value);if(!name||!Number.isFinite(price)||price<0)return alert('Enter a brand and price.');let id=crypto.randomUUID?crypto.randomUUID():String(Date.now());data.settings.brands.push({id,name,price});data.settings.activeBrand=id;$('brandName').value='';$('brandPrice').value='';renderBrands()};
+$('saveSettings').onclick=()=>{data.settings.halfTea=Math.max(0,Number($('halfPrice').value)||0);data.settings.fullTea=Math.max(0,Number($('fullPrice').value)||0);document.querySelectorAll('.brand-row').forEach(row=>{let b=data.settings.brands.find(x=>x.id===row.dataset.id);if(b){b.name=row.querySelector('.bn').value.trim()||b.name;b.price=Math.max(0,Number(row.querySelector('.bp').value)||0)}});data.settings.activeBrand=$('activeBrand').value; $('settingsDialog').close();save();};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
+$('historyBtn').onclick=()=>{let month=data.records.filter(r=>r.datetime.startsWith(today().slice(0,7))),year=data.records.filter(r=>r.datetime.startsWith(today().slice(0,4)));$('reportCards').innerHTML=`<div class="report"><small>THIS MONTH</small><b>${rupee(total(month))}</b></div><div class="report"><small>THIS YEAR</small><b>${rupee(total(year))}</b></div>`;let sorted=[...data.records].sort((a,b)=>b.datetime.localeCompare(a.datetime));$('historyList').innerHTML=sorted.length?sorted.map(r=>{let name=r.kind==='cigarette'?(r.brandName||'Cigarette'):(r.teaSize==='half'?'Half chai':'Full chai');let date=new Date(r.datetime).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});return `<div class="record"><div><strong>${r.owner==='my'?'My':'Group'} · ${esc(name)}</strong><small>${date}</small></div><em>${rupee(r.cost)}</em></div>`}).join(''):'<div class="empty">No entries yet.</div>';$('historyDialog').showModal()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`chai-cigarettes-backup-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!Array.isArray(x.records)||!x.settings)throw 0;if(!confirm('Replace current records with this backup? Export your current data first if needed.'))return;data={...fresh(),...x,version:2,settings:{...fresh().settings,...x.settings}};save();alert('Backup restored.')}catch(err){alert('Invalid backup file.')}e.target.value=''};
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 render();
