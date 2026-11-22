@@ -28,7 +28,16 @@ function add(kind,owner){
  data.records.push(r);lastAdded=r.id;save();$('feedback').textContent=label+' · '+rupee(cost);
 }
 document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click',()=>add(btn.dataset.add,btn.dataset.owner)));
-$('undoBtn').addEventListener('click',()=>{if(!data.records.length)return;let r=data.records.pop();lastAdded=null;save();$('feedback').textContent='Last entry undone.'});
+$('undoBtn').addEventListener('click',()=>{
+ if(!data.records.length)return;
+ const r=data.records[data.records.length-1];
+ const item=r.kind==='cigarette'?(r.brandName||'Cigarette'):(r.teaSize==='half'?'Half chai':'Full chai');
+ const owner=r.owner==='my'?'My count':'Group count';
+ const when=new Date(r.datetime).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+ const message=`Undo this entry?\\n\\n${owner}: ${item}\\nAmount: ${rupee(r.cost)}\\nTime: ${when}\\n\\nThis will remove the latest record.`;
+ if(!window.confirm(message))return;
+ data.records.pop();lastAdded=null;save();$('feedback').textContent='Last entry removed.';
+});
 $('settingsOpen').addEventListener('click',openSettings);
 function openSettings(){ $('halfPrice').value=data.settings.halfTea;$('fullPrice').value=data.settings.fullTea;renderBrands();$('settingsDialog').showModal()}
 function renderBrands(){
